@@ -86,7 +86,7 @@ void cd(char *new_path) {
 	if (is_valid_directory(new_path)) {
 		strcpy(cwd, new_path);
 	} else {
-		printf("cd: %s: No such file or directory", new_path);
+		printf("cd: %s: No such file or directory\n", new_path);
 	}
 }
 
