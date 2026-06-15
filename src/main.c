@@ -83,11 +83,20 @@ void pwd() {
 }
 
 void cd(char *new_path) {
-	if (is_valid_directory(new_path)) {
-		strcpy(cwd, new_path);
+	char *temp;
+	int unchanged = 1;
+
+	temp = resolve_relative_path(cwd, new_path);
+	if (temp != NULL) {
+		strcpy(cwd, temp);
+		free(temp);
+		unchanged = chdir(cwd);
 	} else {
 		printf("cd: %s: No such file or directory\n", new_path);
+		return;
 	}
+
+	if (unchanged) printf("cd: %s: Could not change directory\n", cwd);
 }
 
 int main(int argc, char *argv[]) {

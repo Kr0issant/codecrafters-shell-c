@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "file_utils.h"
 #include <sys/stat.h>
 #include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
+#include "misc.h"
+#include "file_utils.h"
 
 #ifdef _WIN32
     #define PATH_SEPARATOR ";"
@@ -67,4 +68,29 @@ char* find_executable(char *program_name) {
 		if ((access(program_name, F_OK) == 0) && (access(program_name, X_OK) == 0)) return strdup(program_name);
 		return NULL;
 	}
+}
+
+char* resolve_relative_path(char *cwd, char *new_path) {
+	char *path_copy = strdup(new_path);
+	char *path = malloc(4096);
+	
+	strcpy(path, cwd);
+
+	char *path_token = strtok(path_copy, DIR_SEPARATOR);
+
+	while (path_token != NULL) {
+		if (strcmp(path_token, "~") == 0) strcpy(path, getenv("HOME"));
+		else if (strcmp(path_token, ".") == 0) continue;
+		else if (strcmp(path_token, "..") == 0) remove_last_token(path, *DIR_SEPARATOR);
+		else {
+			strcat(path, DIR_SEPARATOR);
+			strcat(path, path_token);
+		}
+
+		path_token = strtok(NULL, DIR_SEPARATOR);
+	}
+
+	free(path_copy);
+
+	return path;
 }
