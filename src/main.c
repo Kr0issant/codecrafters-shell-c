@@ -19,8 +19,11 @@
 const int MAX_INPUT_LENGTH = 65536;
 char *input_buffer;
 Tokens tk;
-const char *valid_commands[] = {"exit", "echo", "type"};
+
+const char *valid_commands[] = {"exit", "echo", "type", "pwd"};
 const int valid_command_count = sizeof(valid_commands) / sizeof(valid_commands[0]);
+
+char cwd[1024];
 
 void free_tk(Tokens *tk) {
 	if (tk->tokens != NULL) {
@@ -129,6 +132,10 @@ void type(Tokens tk) {
 	}
 }
 
+void pwd() {
+	printf("%s\n", cwd);
+}
+
 int main(int argc, char *argv[]) {
 	atexit(cleanup_heap);
 	setbuf(stdout, NULL);
@@ -137,6 +144,8 @@ int main(int argc, char *argv[]) {
 	if (input_buffer == NULL) return 1;
 	
 	char *exe_path;
+
+	if (getcwd(cwd, sizeof(cwd)) == NULL) return 1;
 
 	char *temp_inp;
 	Tokens temp_tk;
@@ -158,6 +167,7 @@ int main(int argc, char *argv[]) {
 		else if (strcmp(tk.tokens[0], "exit") == 0) return 0;
 		else if (strcmp(tk.tokens[0], "echo") == 0) echo(tk);
 		else if (strcmp(tk.tokens[0], "type") == 0) type(tk);
+		else if (strcmp(tk.tokens[0], "pwd") == 0) pwd();
 		
 		else {
 			exe_path = find_executable(tk.tokens[0]);
