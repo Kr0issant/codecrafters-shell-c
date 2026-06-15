@@ -65,6 +65,12 @@ Tokens get_tokens(char *input) {
         if (is_subtoken) {
             if (c == '\0') break;
 
+            if (opening == '\"' && c == '\\' && (input[i + 1] == '\\' || input[i + 1] == '\"')) {
+                current_token[buf_idx++] = input[i + 1];
+                i += 2;
+                continue;
+            }
+
             current_token[buf_idx++] = c;
             i++;
             continue;
