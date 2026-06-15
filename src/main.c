@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include "tokenizer.h"
+#include "run_program.h"
 
 #ifdef _WIN32
     #define PATH_SEPARATOR ";"
@@ -81,12 +82,14 @@ char* find_executable(char *program_name) {
 
 		dir = strtok(NULL, PATH_SEPARATOR);
 	}
-
+	
 	free(path_copy);
 
 	if (found) return full_path;
 	else {
 		free(full_path);
+
+		if ((access(program_name, F_OK) == 0) && (access(program_name, X_OK) == 0)) return strdup(program_name);
 		return NULL;
 	}
 }
@@ -121,7 +124,7 @@ void type(Tokens tk) {
 			printf("%s is %s\n", tk.tokens[i], exe_path);
 			free(exe_path);
 		}
-		
+
 		else printf("%s: not found\n", tk.tokens[i]);
 	}
 }
@@ -132,6 +135,8 @@ int main(int argc, char *argv[]) {
 
 	input_buffer = malloc(MAX_INPUT_LENGTH);
 	if (input_buffer == NULL) return 1;
+	
+	char *exe_path;
 
 	char *temp_inp;
 	Tokens temp_tk;
@@ -153,8 +158,16 @@ int main(int argc, char *argv[]) {
 		else if (strcmp(tk.tokens[0], "exit") == 0) return 0;
 		else if (strcmp(tk.tokens[0], "echo") == 0) echo(tk);
 		else if (strcmp(tk.tokens[0], "type") == 0) type(tk);
+		
+		else {
+			exe_path = find_executable(tk.tokens[0]);
+			if (exe_path != NULL) {
+				run_program(exe_path, tk.tokens);
+				free(exe_path);
+			}
 	
-		else printf("%s: command not found\n", tk.tokens[0]);
+			else printf("%s: command not found\n", tk.tokens[0]);
+		}
 	}
 
 	return 0;
