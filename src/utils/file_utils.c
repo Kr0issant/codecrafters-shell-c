@@ -72,25 +72,38 @@ char* find_executable(char *program_name) {
 
 char* resolve_relative_path(char *cwd, char *new_path) {
 	char *path_copy = strdup(new_path);
-	char *path = malloc(4096);
-	
-	strcpy(path, cwd);
+    char *path = malloc(4096);
+    if (!path || !path_copy) {
+        free(path_copy);
+        return NULL;
+    }
 
-	char *path_token = strtok(path_copy, DIR_SEPARATOR);
+    if (*new_path == *DIR_SEPARATOR) path[0] = '\0';
+    else if (*new_path == '~') {
+        char *home = getenv("HOME");
+        strcpy(path, home ? home : DIR_SEPARATOR);
+    } else strcpy(path, cwd);
 
-	while (path_token != NULL) {
-		if (strcmp(path_token, "~") == 0) strcpy(path, getenv("HOME"));
-		else if (strcmp(path_token, ".") == 0) continue;
-		else if (strcmp(path_token, "..") == 0) remove_last_token(path, *DIR_SEPARATOR);
-		else {
-			strcat(path, DIR_SEPARATOR);
-			strcat(path, path_token);
-		}
+    char *path_token = strtok(path_copy, DIR_SEPARATOR);
+    int is_first_token = 1;
 
-		path_token = strtok(NULL, DIR_SEPARATOR);
-	}
+    while (path_token != NULL) {
+        if (strcmp(path_token, "~") == 0 && is_first_token);
+        else if (strcmp(path_token, ".") == 0);
+        else if (strcmp(path_token, "..") == 0) remove_last_token(path, *DIR_SEPARATOR);
+        else {
+            if (strcmp(path, DIR_SEPARATOR) != 0) strcat(path, DIR_SEPARATOR);
+            strcat(path, path_token);
+        }
 
-	free(path_copy);
+        is_first_token = 0;
+        path_token = strtok(NULL, DIR_SEPARATOR);
+    }
 
-	return path;
+    if (strlen(path) == 0) {
+        strcpy(path, DIR_SEPARATOR);
+    }
+
+    free(path_copy);
+    return path;
 }
