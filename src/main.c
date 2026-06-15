@@ -36,6 +36,8 @@ int main(int argc, char *argv[]) {
 		temp = read_input(input_buffer, MAX_INPUT_LENGTH);
 		if (temp == NULL) return 1;
 		input_buffer = temp;
+
+		if (strcmp(input_buffer, "exit") == 0) return 0;
 	
 		printf("%s: command not found\n", input_buffer);
 	}
