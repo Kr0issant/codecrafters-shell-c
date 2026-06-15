@@ -105,6 +105,12 @@ Tokens get_tokens(char *input) {
             continue;
         }
 
+        if (c == '\\' && input[i + 1] != '\0') {
+            current_token[buf_idx++] = input[i + 1];
+            i += 2;
+            continue;
+        }
+
         current_token[buf_idx++] = c;
         i++;
     }
