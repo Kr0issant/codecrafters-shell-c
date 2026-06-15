@@ -95,8 +95,9 @@ void cd(char *new_path) {
 		printf("cd: %s: No such file or directory\n", new_path);
 		return;
 	}
-
-	if (unchanged) printf("cd: %s: Could not change directory\n", cwd);
+	
+	// if (unchanged) printf("cd: %s: Could not change directory\n", cwd);
+	if (unchanged) printf("cd: %s: No such file or directory\n", new_path);
 }
 
 int main(int argc, char *argv[]) {
