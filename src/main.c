@@ -2,29 +2,43 @@
 #include <stdlib.h>
 #include <string.h>
 
-char* read_input() {
-	const int MAX_LENGTH = 65536;
+const int MAX_INPUT_LENGTH = 65536;
+char *input_buffer;
 
-	char *buffer = malloc(MAX_LENGTH);
-	if (buffer == NULL) return NULL;
+void cleanup_heap() {
+	if (input_buffer != NULL) {
+		free(input_buffer);
+		input_buffer = NULL;
+	}
+}
 
-	if (fgets(buffer, MAX_LENGTH, stdin) != NULL) {
+char* read_input(char *buffer, int max_len) {
+	if (fgets(buffer, max_len, stdin) != NULL) {
         buffer[strcspn(buffer, "\n")] = '\0';
+		return buffer;
     }
 
-	return buffer;
+	return NULL;
 }
 
 int main(int argc, char *argv[]) {
-	// Flush after every printf
+	atexit(cleanup_heap);
 	setbuf(stdout, NULL);
 
-	printf("$ ");
+	input_buffer = malloc(MAX_INPUT_LENGTH);
+	if (input_buffer == NULL) return 1;
 
-	char *input = read_input();
-	if (input == NULL) return 1;
+	char *temp;
 
-	printf("%s: command not found\n", input);
+	while (1) {
+		printf("$ ");
+	
+		temp = read_input(input_buffer, MAX_INPUT_LENGTH);
+		if (temp == NULL) return 1;
+		input_buffer = temp;
+	
+		printf("%s: command not found\n", input_buffer);
+	}
 
 	return 0;
 }
