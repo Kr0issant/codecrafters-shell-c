@@ -23,6 +23,6 @@ int run_program(char *program_path, char *args[], char *output_file, int fd, int
     return 0;
 }
 
-void run_builtin(Command cmd, char **cwd, char *output_file) {
+void run_builtin(Command cmd, char **cwd, char *output_file, int fd, int append) {
     
 }
