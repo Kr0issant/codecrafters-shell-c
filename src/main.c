@@ -3,106 +3,46 @@
 #include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include "utils/tokenizer.h"
+#include "structs/cmd_structs.h"
+#include "utils/misc.h"
 #include "utils/file_utils.h"
-#include "modules/run_program.h"
+#include "modules/builtins.h"
+#include "modules/tokenizer.h"
+#include "modules/get_a_job.h"
+#include "modules/run_job.h"
 
 const int MAX_INPUT_LENGTH = 65536;
 char *input_buffer;
 Tokens tk;
 
-const char *valid_builtins[] = {"exit", "echo", "type", "pwd", "cd"};
-const int valid_builtins_count = sizeof(valid_builtins) / sizeof(valid_builtins[0]);
+Job job = {NULL, 0};
 
-char *cwd;
-
-void free_tk(Tokens *tk) {
-	if (tk->tokens != NULL) {
-		if (tk->num_tokens > 0) {
-			for (int i = 0; i < tk->num_tokens; i++) free(tk->tokens[i]);
-		}
-		free(tk->tokens);
-		tk->tokens = NULL;
-	}
-}
+char *cwd; // current working directory
 
 void cleanup_heap() {
 	if (input_buffer != NULL) {
 		free(input_buffer);
 		input_buffer = NULL;
 	}
-	free_tk(&tk);
-}
+	free_tokens(&tk);
 
-char* read_input(char *buffer, int max_len) {
-	if (fgets(buffer, max_len, stdin) != NULL) {
-        buffer[strcspn(buffer, "\n")] = '\0';
-		return buffer;
+	for (int i = 0; i < job.num_commands; i++) {
+        free_command(&(job.commands[i]));
+    }
+    if (job.commands != NULL) {
+        free(job.commands);
     }
 
-	return NULL;
-}
-
-void echo(Tokens tk) {
-	for (int i = 1; i < tk.num_tokens; i++) {
-		printf("%s", tk.tokens[i]);
-		if (i < tk.num_tokens - 1) printf(" ");
-	}
-	printf("\n");
-}
-
-void type(Tokens tk) {
-	bool found;
-	char *exe_path;
-
-	for (int i = 1; i < tk.num_tokens; i++) {
-		found = false;
-		for (int j = 0; j < valid_builtins_count; j++) {
-			if (strcmp(valid_builtins[j], tk.tokens[i]) == 0) {
-				found = true;
-				break;
-			}
-		}
-		if (found) {
-			printf("%s is a shell builtin\n", tk.tokens[i]);
-			continue;
-		}
-
-		exe_path = find_executable(tk.tokens[i]);
-		if (exe_path != NULL) {
-			printf("%s is %s\n", tk.tokens[i], exe_path);
-			free(exe_path);
-		}
-
-		else printf("%s: not found\n", tk.tokens[i]);
-	}
-}
-
-void pwd() {
-	printf("%s\n", cwd);
-}
-
-void cd(char *new_path) {
-	char *temp;
-	int unchanged = 1;
-
-	temp = resolve_relative_path(cwd, new_path);
-	if (temp != NULL) {
-		strcpy(cwd, temp);
-		free(temp);
-		unchanged = chdir(cwd);
-	} else {
-		printf("cd: %s: No such file or directory\n", new_path);
-		return;
-	}
-	
-	// if (unchanged) printf("cd: %s: Could not change directory\n", cwd);
-	if (unchanged) printf("cd: %s: No such file or directory\n", new_path);
+    if (cwd != NULL) {
+        free(cwd);
+        cwd = NULL;
+    }
 }
 
 int main(int argc, char *argv[]) {
 	atexit(cleanup_heap);
 	setbuf(stdout, NULL);
+	// clear_screen();
 	
 	input_buffer = malloc(MAX_INPUT_LENGTH);
 	if (input_buffer == NULL) return 1;
@@ -114,6 +54,10 @@ int main(int argc, char *argv[]) {
 	
 	char *temp_inp;
 	Tokens temp_tk;
+
+	Job temp_job;
+
+	int exit;
 	
 	while (true) {
 		printf("$ ");
@@ -124,26 +68,18 @@ int main(int argc, char *argv[]) {
 
 		temp_tk = get_tokens(input_buffer);
 		if (temp_tk.tokens == NULL) return 1;
-		free_tk(&tk);
+		free_tokens(&tk);
 		tk = temp_tk;
 
-		if (tk.num_tokens == 0 || tk.tokens[0] == NULL || strlen(tk.tokens[0]) == 0) continue;
-
-		else if (strcmp(tk.tokens[0], "exit") == 0) return 0;
-		else if (strcmp(tk.tokens[0], "echo") == 0) echo(tk);
-		else if (strcmp(tk.tokens[0], "type") == 0) type(tk);
-		else if (strcmp(tk.tokens[0], "pwd") == 0) pwd();
-		else if (strcmp(tk.tokens[0], "cd") == 0) cd(tk.tokens[1]);
+		temp_job = get_job(tk);
+		if (temp_job.commands == NULL) return 1;
+		for (int i = 0; i < job.num_commands; i++) free_command(&(job.commands[i]));
+		free(job.commands);
+		job = temp_job;
 		
-		else {
-			exe_path = find_executable(tk.tokens[0]);
-			if (exe_path != NULL) {
-				run_program(exe_path, tk.tokens);
-				free(exe_path);
-			}
-	
-			else printf("%s: command not found\n", tk.tokens[0]);
-		}
+		exit = run_job(job, &cwd);
+		if (exit == -2) break;
+		if (exit != 0) printf("invalid command\n");
 	}
 
 	return 0;

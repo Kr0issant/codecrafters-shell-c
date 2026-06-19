@@ -17,18 +17,17 @@ int enlarge_tokens(char ***tokens, int max) {
 }
 
 int add_token(char ***tokens, int *num_tokens, int *max_tokens, const char *str) {
-    if (strlen(str) == 0) return true;
+    if (strlen(str) == 0) return 0;
+
+    if (*num_tokens == *max_tokens) {
+        if (enlarge_tokens(tokens, *max_tokens)) return 1;
+        *max_tokens += 8;
+    }
 
     (*tokens)[*num_tokens] = strdup(str);
     if ((*tokens)[*num_tokens] == NULL) return 1;
 
     (*num_tokens)++;
-    if (*num_tokens == *max_tokens) {
-        if (enlarge_tokens(tokens, *max_tokens) == 1) {
-            return 1;
-        }
-        *max_tokens += 8;
-    }
     return 0;
 }
 
@@ -76,24 +75,40 @@ Tokens get_tokens(char *input) {
             continue;
         }
 
-        bool is_op2 = (c == '>' && input[i+1] == '>') || 
-                      (c == '&' && input[i+1] == '&') || 
-                      (c == '|' && input[i+1] == '|');
+        bool is_op3 = 
+            (c == '0' && input[i+1] == '>' && input[i+2] == '>') ||
+            (c == '1' && input[i+1] == '>' && input[i+2] == '>') ||
+            (c == '2' && input[i+1] == '>' && input[i+2] == '>');
 
-        bool is_op1 = !is_op2 && (c == '>' || c == '<' || c == '|');
+        bool is_op2 = !is_op3 &&
+            (c == '>' && input[i+1] == '>') ||
+            (c == '0' && input[i+1] == '>') ||
+            (c == '1' && input[i+1] == '>') ||
+            (c == '2' && input[i+1] == '>') ||
+            (c == '&' && input[i+1] == '&') ||
+            (c == '|' && input[i+1] == '|');
+
+        bool is_op1 = !is_op2 &&
+            (c == '>'|| c == '<' || c == '|' || c == ';' || c == '&');
 
         if (c == ' ' || c == '\0' || is_op1 || is_op2) {
             if (buf_idx > 0) {
                 current_token[buf_idx] = '\0';
                 if (add_token(&tokens, &num_tokens, &max_tokens, current_token)) {
                     free(current_token);
-                    Tokens partial_result = {tokens, num_tokens};
-                    return partial_result;
+                    // Tokens partial_result = {tokens, num_tokens};
+                    return (Tokens){NULL, 0};
                 }
                 buf_idx = 0;
             }
 
-            if (is_op2) {
+            if (is_op3) {
+                char op[4] = {c, input[i+1], input[i+2], '\0'};
+                add_token(&tokens, &num_tokens, &max_tokens, op);
+                i += 3;
+                continue;
+            }
+            else if (is_op2) {
                 char op[3] = {c, input[i+1], '\0'};
                 add_token(&tokens, &num_tokens, &max_tokens, op);
                 i += 2;
