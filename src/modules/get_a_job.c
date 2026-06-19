@@ -24,7 +24,7 @@ Command new_command(Tokens tk, int tk_start, int tk_end, char *link) {
     if (len <= 0) return (Command){NULL, 0, 0, -1, NULL};
 
     Command cmd;
-    cmd.tokens = malloc(len * sizeof(char *));
+    cmd.tokens = malloc((len + 1) * sizeof(char *));
     if (cmd.tokens == NULL) return (Command){NULL, 0, 0, -1, NULL};
     cmd.num_tokens = len;
     cmd.link = link ? strdup(link) : NULL;
@@ -32,7 +32,8 @@ Command new_command(Tokens tk, int tk_start, int tk_end, char *link) {
     for (int i = tk_start; i < tk_end; i++) {
         cmd.tokens[i - tk_start] = strdup(tk.tokens[i]);
     }
-
+    
+    cmd.tokens[len] = NULL;
     return cmd;
 }
 
