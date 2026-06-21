@@ -10,7 +10,7 @@
 #include "builtins.h"
 #include "run_program.h"
 
-Program run_program(char *program_path, char *args[], char *output_file, int input_fd, int output_fd, int append, int is_bg) {
+Program run_program(char *program_path, char *args[], int input_fd, int output_fd, int target_fd, int is_bg) {
     pid_t pid;
     int status = 0;
 
@@ -21,17 +21,8 @@ Program run_program(char *program_path, char *args[], char *output_file, int inp
         posix_spawn_file_actions_adddup2(&actions, input_fd, STDIN_FILENO);
     }
 
-    if (output_file != NULL) {
-        int flags = O_WRONLY | O_CREAT;
-        if (append) flags |= O_APPEND;
-        else flags |= O_TRUNC;
-
-        int target_fd = 3;
-        posix_spawn_file_actions_addopen(&actions, target_fd, output_file, flags, 0644);
-        posix_spawn_file_actions_adddup2(&actions, target_fd, STDOUT_FILENO);
-        posix_spawn_file_actions_addclose(&actions, target_fd);
-    } else if (output_fd != STDOUT_FILENO) {
-        posix_spawn_file_actions_adddup2(&actions, output_fd, STDOUT_FILENO);
+    if (output_fd != STDOUT_FILENO || target_fd != STDOUT_FILENO) {
+        posix_spawn_file_actions_adddup2(&actions, output_fd, target_fd);
     }
 
     if (posix_spawn(&pid, program_path, &actions, NULL, args, NULL) == 0) {
