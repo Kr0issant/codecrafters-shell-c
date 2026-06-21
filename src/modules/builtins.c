@@ -3,8 +3,11 @@
 #include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <sys/wait.h>
 #include "../structs/cmd_structs.h"
+#include "../structs/program_structs.h"
 #include "../utils/file_utils.h"
+#include "../utils/misc.h"
 #include "tokenizer.h"
 #include "builtins.h"
 
@@ -69,6 +72,35 @@ void cd(char *new_path, char **cwd) {
     *cwd = temp; 
 }
 
-void jobs() {
-	
+void jobs(BackgroundJobs *mgr) {
+    int status;
+    pid_t pid;
+    
+    for (int i = 0; i < mgr->count; i++) {
+        pid = waitpid(mgr->jobs[i].pid, &status, WNOHANG);
+        if (pid > 0) {
+            free(mgr->jobs[i].status);
+            mgr->jobs[i].status = strdup("Done");
+        }
+    }
+
+    for (int i = 0; i < mgr->count; i++) {
+        printf("[%d]  %s\t\t%s\n", 
+               mgr->jobs[i].job_no, 
+               mgr->jobs[i].status, 
+               mgr->jobs[i].command.tokens[0]);
+    }
+
+    for (int i = 0; i < mgr->count; i++) {
+        if (strcmp(mgr->jobs[i].status, "Done") == 0) {
+            free(mgr->jobs[i].status);
+            free_command(&(mgr->jobs[i].command));
+
+            for (int j = i; j < mgr->count - 1; j++) {
+                mgr->jobs[j] = mgr->jobs[j + 1];
+            }
+            mgr->count--;
+            i--;
+        }
+    }
 }

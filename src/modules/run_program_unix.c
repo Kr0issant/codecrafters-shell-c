@@ -47,7 +47,7 @@ Program run_program(char *program_path, char *args[], char *output_file, int fd,
     return (Program){pid, status};
 }
 
-void run_builtin(Command cmd, char **cwd, char *output_file, int fd, int append, int is_bg) {
+void run_builtin(Command cmd, char **cwd, char *output_file, int fd, int append, int is_bg, BackgroundJobs *mgr) {
     int saved_fd = -1;
 
     if (output_file != NULL) {
@@ -68,7 +68,7 @@ void run_builtin(Command cmd, char **cwd, char *output_file, int fd, int append,
     else if (strcmp(cmd.tokens[0], "type") == 0) type(cmd);
     else if (strcmp(cmd.tokens[0], "pwd") == 0) pwd(*cwd);
     else if (strcmp(cmd.tokens[0], "cd") == 0) cd(cmd.tokens[1], cwd);
-    else if (strcmp(cmd.tokens[0], "jobs") == 0);
+    else if (strcmp(cmd.tokens[0], "jobs") == 0) jobs(mgr);
 
     if (output_file != NULL && saved_fd >= 0) {
         dup2(saved_fd, fd);

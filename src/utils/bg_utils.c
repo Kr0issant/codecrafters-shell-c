@@ -38,7 +38,7 @@ void add_background_job(BackgroundJobs *mgr, int pid, Command cmd) {
     }
     mgr->jobs[idx].command.tokens[cmd.num_tokens] = NULL;
 
-    printf("[%d] %d\n", mgr->jobs[idx].job_no, pid);
+    printf("[%d]+ %d\n", mgr->jobs[idx].job_no, pid);
     mgr->count++;
 }
 
@@ -49,8 +49,6 @@ void check_background_jobs(BackgroundJobs *mgr) {
     for (int i = 0; i < mgr->count; i++) {
         pid = waitpid(mgr->jobs[i].pid, &status, WNOHANG);
         if (pid > 0) {
-            printf("\n[%d]+  Done\t\t%s\n", mgr->jobs[i].job_no, mgr->jobs[i].command.tokens[0]);
-            
             if (mgr->jobs[i].status) free(mgr->jobs[i].status);
             free_command(&(mgr->jobs[i].command));
 

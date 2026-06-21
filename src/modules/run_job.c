@@ -18,7 +18,7 @@ int run_cmd(Command cmd, char **cwd, char *output_file, int fd, int append, int 
     
     for (int i = 1; i < valid_builtins_count; i++) {
         if (strcmp(cmd.tokens[0], valid_builtins[i]) == 0) {
-            run_builtin(cmd, cwd, output_file, fd, append, is_bg);
+            run_builtin(cmd, cwd, output_file, fd, append, is_bg, mgr);
             return 0;
         }
     }
