@@ -35,11 +35,10 @@ Program run_program(char *program_path, char *args[], char *output_file, int inp
     }
 
     if (posix_spawn(&pid, program_path, &actions, NULL, args, NULL) == 0) {
-        if (!is_bg && output_fd == STDOUT_FILENO) { 
+        if (!is_bg && input_fd == STDIN_FILENO && output_fd == STDOUT_FILENO) { 
             waitpid(pid, &status, 0);
             status = WEXITSTATUS(status);
         }
-        // if (WIFEXITED(status)) printf("Program exited with code %d\n", WEXITSTATUS(status));
     } else {
         printf("Failed to spawn process\n");
         posix_spawn_file_actions_destroy(&actions);

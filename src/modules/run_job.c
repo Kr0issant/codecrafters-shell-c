@@ -14,7 +14,7 @@
 
 #include <unistd.h>
 
-int run_cmd(Command cmd, char **cwd, int input_fd, int output_fd, int is_bg, BackgroundJobs *mgr) {
+int run_cmd(Command cmd, char **cwd, int input_fd, int output_fd, int is_bg, BackgroundJobs *mgr, pid_t *spawned_pid) {
     if (cmd.num_tokens == 0 || cmd.tokens[0] == NULL || strlen(cmd.tokens[0]) == 0) return 0;
 
     else if (strcmp(cmd.tokens[0], "exit") == 0) return -2;
@@ -33,6 +33,8 @@ int run_cmd(Command cmd, char **cwd, int input_fd, int output_fd, int is_bg, Bac
     if (exe_path != NULL) {
         Program program = run_program(exe_path, cmd.tokens, NULL, input_fd, output_fd, 0, is_bg);
         if (is_bg && program.pid > 0) add_background_job(mgr, program.pid, cmd);
+
+        if (spawned_pid != NULL) *spawned_pid = program.pid;
         
         free(exe_path);
         return program.status;
@@ -119,13 +121,15 @@ int run_job(Job job, char **cwd, BackgroundJobs *mgr) {
                 }
                 if (is_pipe) close(pipefds[0]);
                 
-                int rc = run_cmd(cmd, cwd, STDIN_FILENO, STDOUT_FILENO, is_bg, mgr);
+                int rc = run_cmd(cmd, cwd, STDIN_FILENO, STDOUT_FILENO, is_bg, mgr, NULL);
                 exit(rc < 0 ? 0 : rc);
             } else if (builtin_pid > 0) {
                 pids[spawned_count++] = builtin_pid;
             }
         } else {
-            exit_status = run_cmd(cmd, cwd, in_fd, out_fd, is_bg, mgr);   
+            pid_t ext_pid = 0;
+            exit_status = run_cmd(cmd, cwd, in_fd, out_fd, is_bg, mgr, &ext_pid);
+            if (ext_pid > 0) pids[spawned_count++] = ext_pid;
             if (exit_status == -2) { free(pids); return -2; }
         }
 
