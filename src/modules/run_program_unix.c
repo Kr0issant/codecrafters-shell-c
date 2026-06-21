@@ -10,36 +10,39 @@
 #include "builtins.h"
 #include "run_program.h"
 
-Program run_program(char *program_path, char *args[], char *output_file, int fd, int append, int is_bg) {
+Program run_program(char *program_path, char *args[], char *output_file, int input_fd, int output_fd, int append, int is_bg) {
     pid_t pid;
     int status = 0;
 
     posix_spawn_file_actions_t actions;
     posix_spawn_file_actions_init(&actions);
 
+    if (input_fd != STDIN_FILENO) {
+        posix_spawn_file_actions_adddup2(&actions, input_fd, STDIN_FILENO);
+    }
+
     if (output_file != NULL) {
-        int flags;
-        if (fd == 0) flags = O_RDONLY;
-        else {
-            flags = O_WRONLY | O_CREAT;
-            if (append) flags |= O_APPEND;
-            else flags |= O_TRUNC;
-        }
+        int flags = O_WRONLY | O_CREAT;
+        if (append) flags |= O_APPEND;
+        else flags |= O_TRUNC;
 
         int target_fd = 3;
         posix_spawn_file_actions_addopen(&actions, target_fd, output_file, flags, 0644);
-        posix_spawn_file_actions_adddup2(&actions, target_fd, fd);
+        posix_spawn_file_actions_adddup2(&actions, target_fd, STDOUT_FILENO);
         posix_spawn_file_actions_addclose(&actions, target_fd);
+    } else if (output_fd != STDOUT_FILENO) {
+        posix_spawn_file_actions_adddup2(&actions, output_fd, STDOUT_FILENO);
     }
 
     if (posix_spawn(&pid, program_path, &actions, NULL, args, NULL) == 0) {
-        if (!is_bg) {
+        if (!is_bg && output_fd == STDOUT_FILENO) { 
             waitpid(pid, &status, 0);
             status = WEXITSTATUS(status);
         }
         // if (WIFEXITED(status)) printf("Program exited with code %d\n", WEXITSTATUS(status));
     } else {
         printf("Failed to spawn process\n");
+        posix_spawn_file_actions_destroy(&actions);
         return (Program){-1, 1};
     }
 

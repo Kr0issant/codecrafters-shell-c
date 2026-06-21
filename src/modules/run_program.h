@@ -3,7 +3,7 @@
 
 #include "../structs/program_structs.h"
 
-Program run_program(char *program_path, char *args[], char *output_file, int fd, int append, int is_bg);
+Program run_program(char *program_path, char *args[], char *output_file, int input_fd, int output_fd, int append, int is_bg);
 void run_builtin(Command cmd, char **cwd, char *output_file, int fd, int append, int is_bg, BackgroundJobs *mgr);
 
 #endif
