@@ -79,6 +79,7 @@ int run_job(Job job, char **cwd) {
         }
 
         exit = run_cmd(job.commands[i], cwd, output_file, fd, append, is_pipe, is_bg);
+        if (exit == -2) return -2;
         
         if (output_file != NULL) i++;
 
@@ -89,7 +90,6 @@ int run_job(Job job, char **cwd) {
             continue;
         }
 
-        if (exit == -2) return -2;
 
         if (strcmp(link, "||") == 0 && exit == 0) break;
         if (strcmp(link, "&&") == 0 && exit != 0) break;
