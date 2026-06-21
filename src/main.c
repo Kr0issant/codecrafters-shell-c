@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 		
 		exit = run_job(job, &cwd, &bg_manager);
 		if (exit == -2) break;
-		if (exit == 127) printf("invalid command\n");
+		// if (exit == 127) continue;
 	}
 
 	return 0;
