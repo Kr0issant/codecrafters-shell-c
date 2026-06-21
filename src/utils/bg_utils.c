@@ -48,7 +48,22 @@ void check_background_jobs(BackgroundJobs *mgr) {
     
     for (int i = 0; i < mgr->count; i++) {
         pid = waitpid(mgr->jobs[i].pid, &status, WNOHANG);
+        
         if (pid > 0) {
+            char marker = ' ';
+            if (i == mgr->count - 1) marker = '+';
+            else if (i == mgr->count - 2) marker = '-';
+
+            printf("[%d]%c  %-20s", mgr->jobs[i].job_no, marker, "Done");
+
+            for (int j = 0; j < mgr->jobs[i].command.num_tokens; j++) {
+                printf("%s", mgr->jobs[i].command.tokens[j]);
+                if (j < mgr->jobs[i].command.num_tokens - 1) {
+                    printf(" ");
+                }
+            }
+            printf("\n");
+
             if (mgr->jobs[i].status) free(mgr->jobs[i].status);
             free_command(&(mgr->jobs[i].command));
 
@@ -56,7 +71,7 @@ void check_background_jobs(BackgroundJobs *mgr) {
                 mgr->jobs[j] = mgr->jobs[j + 1];
             }
             mgr->count--;
-            i--; 
+            i--;
         }
     }
 }
