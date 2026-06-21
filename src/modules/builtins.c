@@ -8,7 +8,7 @@
 #include "tokenizer.h"
 #include "builtins.h"
 
-const char *valid_builtins[] = {"exit", "echo", "type", "pwd", "cd"};
+const char *valid_builtins[] = {"exit", "echo", "type", "pwd", "cd", "jobs"};
 const int valid_builtins_count = sizeof(valid_builtins) / sizeof(valid_builtins[0]);
 
 void echo(Command cmd) {
@@ -67,4 +67,8 @@ void cd(char *new_path, char **cwd) {
 
     free(*cwd);
     *cwd = temp; 
+}
+
+void jobs() {
+	
 }

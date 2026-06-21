@@ -65,6 +65,7 @@ void run_builtin(Command cmd, char **cwd, char *output_file, int fd, int append)
     else if (strcmp(cmd.tokens[0], "type") == 0) type(cmd);
     else if (strcmp(cmd.tokens[0], "pwd") == 0) pwd(*cwd);
     else if (strcmp(cmd.tokens[0], "cd") == 0) cd(cmd.tokens[1], cwd);
+    else if (strcmp(cmd.tokens[0], "jobs") == 0);
 
     if (output_file != NULL && saved_fd >= 0) {
         dup2(saved_fd, fd);

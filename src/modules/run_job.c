@@ -56,20 +56,19 @@ int run_job(Job job, char **cwd) {
         is_pipe = 0;
 
         if (link != NULL && output_file != NULL) {
-            if (strcmp(link, "0>") == 0) { fd = 0; append = 0; }
-            else if (strcmp(link, "0>>") == 0) { fd = 0; append = 1; }
+            char *op = link;
 
-            else if (strcmp(link, ">") == 0) { fd = 1; append = 0; }
-            else if (strcmp(link, "1>") == 0) { fd = 1; append = 0; }
-            else if (strcmp(link, ">>") == 0) { fd = 1; append = 1; }
-            else if (strcmp(link, "1>>") == 0) { fd = 1; append = 1; }
-
-            else if (strcmp(link, "2>") == 0) { fd = 2; append = 0; }
-            else if (strcmp(link, "2>>") == 0) { fd = 2; append = 1; }
+            if (link[0] >= '0' && link[0] <= '2') {
+                fd = link[0] - '0';
+                op++;
+            }
+            if (strcmp(op, ">") == 0) append = 0;
+            else if (strcmp(op, ">>") == 0) append = 1;
         } else if (link != NULL && strcmp(link, "|") == 0) {
             is_pipe = 1;
             if (pipe(pipefds) < 0) return 1;
-
+            
+            // WIP
         }
 
         exit = run_cmd(job.commands[i], cwd, output_file, fd, append, is_pipe);
@@ -81,7 +80,6 @@ int run_job(Job job, char **cwd) {
 
         if (strcmp(link, "||") == 0 && exit == 0) break;
         if (strcmp(link, "&&") == 0 && exit != 0) break;
-
     }
 
     return 0;
