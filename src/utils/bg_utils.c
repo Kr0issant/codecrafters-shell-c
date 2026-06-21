@@ -17,9 +17,22 @@ void add_background_job(BackgroundJobs *mgr, int pid, Command cmd) {
         }
         mgr->jobs = temp;
     }
+
+    int next_job_no = 1;
+    while (1) {
+        int found = 0;
+        for (int i = 0; i < mgr->count; i++) {
+            if (mgr->jobs[i].job_no == next_job_no) {
+                found = 1;
+                break;
+            }
+        }
+        if (!found) break;
+        next_job_no++;
+    }
     
     int idx = mgr->count;
-    mgr->jobs[idx].job_no = ++mgr->total_launched;
+    mgr->jobs[idx].job_no = next_job_no;
     mgr->jobs[idx].pid = pid;
     mgr->jobs[idx].status = strdup("Running");
     
