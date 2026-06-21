@@ -6,12 +6,13 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include "../structs/cmd_structs.h"
+#include "../structs/program_structs.h"
 #include "builtins.h"
 #include "run_program.h"
 
-int run_program(char *program_path, char *args[], char *output_file, int fd, int append) {
+Program run_program(char *program_path, char *args[], char *output_file, int fd, int append, int is_bg) {
     pid_t pid;
-    int status;
+    int status = 0;
 
     posix_spawn_file_actions_t actions;
     posix_spawn_file_actions_init(&actions);
@@ -32,19 +33,21 @@ int run_program(char *program_path, char *args[], char *output_file, int fd, int
     }
 
     if (posix_spawn(&pid, program_path, &actions, NULL, args, NULL) == 0) {
-        waitpid(pid, &status, 0);
-
+        if (!is_bg) {
+            waitpid(pid, &status, 0);
+            status = WEXITSTATUS(status);
+        }
         // if (WIFEXITED(status)) printf("Program exited with code %d\n", WEXITSTATUS(status));
     } else {
         printf("Failed to spawn process\n");
-        return 1;
+        return (Program){-1, 1};
     }
 
     posix_spawn_file_actions_destroy(&actions);
-    return WEXITSTATUS(status);
+    return (Program){pid, status};
 }
 
-void run_builtin(Command cmd, char **cwd, char *output_file, int fd, int append) {
+void run_builtin(Command cmd, char **cwd, char *output_file, int fd, int append, int is_bg) {
     int saved_fd = -1;
 
     if (output_file != NULL) {

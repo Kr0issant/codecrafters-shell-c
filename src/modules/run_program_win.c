@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "run_program.h"
 
-int run_program(char *program_path, char *args[], char *output_file, int fd, int append) {
+int run_program(char *program_path, char *args[], char *output_file, int fd, int append, int is_bg) {
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
 
@@ -23,6 +23,6 @@ int run_program(char *program_path, char *args[], char *output_file, int fd, int
     return 0;
 }
 
-void run_builtin(Command cmd, char **cwd, char *output_file, int fd, int append) {
+void run_builtin(Command cmd, char **cwd, char *output_file, int fd, int append, int is_bg) {
     
 }
