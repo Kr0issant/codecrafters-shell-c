@@ -42,7 +42,7 @@ int run_cmd(Command cmd, char **cwd, int input_fd, int output_fd, int target_fd,
 
     else {
         printf("%s: command not found\n", cmd.tokens[0]);
-        return 1;
+        return 127;
     }
 }
 
