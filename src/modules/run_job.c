@@ -25,7 +25,7 @@ int run_cmd(Command cmd, char **cwd, int input_fd, int output_fd, int target_fd,
     }
         
     if (is_builtin) {
-        run_builtin(cmd, cwd, NULL, output_fd, 0, is_bg, mgr);
+        run_builtin(cmd, cwd, NULL, target_fd, 0, is_bg, mgr);
         return 0;
     }
 
@@ -108,23 +108,38 @@ int run_job(Job job, char **cwd, BackgroundJobs *mgr) {
             if (strcmp(cmd.tokens[0], valid_builtins[j]) == 0) { is_builtin = 1; break; }
         }
 
-        if (is_builtin && (is_pipe || in_fd != STDIN_FILENO)) {
-            pid_t builtin_pid = fork();
-            if (builtin_pid == 0) {
-                if (in_fd != STDIN_FILENO) {
-                    dup2(in_fd, STDIN_FILENO);
-                    close(in_fd);
+        if (is_builtin) {
+            int is_part_of_pipeline = (is_pipe || in_fd != STDIN_FILENO);
+
+            if (is_part_of_pipeline) {
+                pid_t builtin_pid = fork();
+                if (builtin_pid == 0) {
+                    if (in_fd != STDIN_FILENO) {
+                        dup2(in_fd, STDIN_FILENO);
+                        close(in_fd);
+                    }
+                    if (out_fd != STDOUT_FILENO || target_fd != STDOUT_FILENO) {
+                        dup2(out_fd, target_fd);
+                        close(out_fd);
+                    }
+                    if (is_pipe) close(pipefds[0]);
+                    
+                    int rc = run_cmd(cmd, cwd, STDIN_FILENO, STDOUT_FILENO, target_fd, is_bg, mgr, NULL);
+                    exit(rc < 0 ? 0 : rc);
+                } else if (builtin_pid > 0) {
+                    pids[spawned_count++] = builtin_pid;
                 }
-                if (out_fd != STDOUT_FILENO) {
-                    dup2(out_fd, STDOUT_FILENO);
-                    close(out_fd);
-                }
-                if (is_pipe) close(pipefds[0]);
-                
-                int rc = run_cmd(cmd, cwd, STDIN_FILENO, STDOUT_FILENO, target_fd, is_bg, mgr, NULL);
-                exit(rc < 0 ? 0 : rc);
-            } else if (builtin_pid > 0) {
-                pids[spawned_count++] = builtin_pid;
+            } else if (has_file_redirect) {
+                int saved_fd = dup(target_fd);
+                dup2(out_fd, target_fd);
+
+                exit_status = run_cmd(cmd, cwd, in_fd, out_fd, target_fd, is_bg, mgr, NULL);
+
+                dup2(saved_fd, target_fd);
+                close(saved_fd);
+            } else {
+                exit_status = run_cmd(cmd, cwd, in_fd, out_fd, target_fd, is_bg, mgr, NULL);
+                if (exit_status == -2) { free(pids); return -2; }
             }
         } else {
             pid_t ext_pid = 0;
