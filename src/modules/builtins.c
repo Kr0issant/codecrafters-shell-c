@@ -85,10 +85,21 @@ void jobs(BackgroundJobs *mgr) {
     }
 
     for (int i = 0; i < mgr->count; i++) {
-        printf("[%d]  %s\t\t%s\n", 
+        char marker = (i == mgr->count - 1) ? '+' : ' ';
+
+        printf("[%d]%c  %-24s", 
                mgr->jobs[i].job_no, 
-               mgr->jobs[i].status, 
-               mgr->jobs[i].command.tokens[0]);
+               marker,
+               mgr->jobs[i].status);
+
+        for (int j = 0; j < mgr->jobs[i].command.num_tokens; j++) {
+            printf("%s", mgr->jobs[i].command.tokens[j]);
+            if (j < mgr->jobs[i].command.num_tokens - 1) {
+                printf(" ");
+            }
+        }
+        
+        printf(" &\n");
     }
 
     for (int i = 0; i < mgr->count; i++) {
