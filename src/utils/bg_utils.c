@@ -38,7 +38,7 @@ void add_background_job(BackgroundJobs *mgr, int pid, Command cmd) {
     }
     mgr->jobs[idx].command.tokens[cmd.num_tokens] = NULL;
 
-    printf("[%d]+ %d\n", mgr->jobs[idx].job_no, pid);
+    printf("[%d] %d\n", mgr->jobs[idx].job_no, pid);
     mgr->count++;
 }
 
